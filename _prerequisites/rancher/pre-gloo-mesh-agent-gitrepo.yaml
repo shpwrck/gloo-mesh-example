@@ -1,0 +1,16 @@
+apiVersion: fleet.cattle.io/v1alpha1
+kind: GitRepo
+metadata:
+  name: pre-gma
+  namespace: fleet-default
+spec:
+  branch: master
+  clientSecretName: auth-q7npb
+  forceSyncGeneration: 4
+  insecureSkipTLSVerify: false
+  paths:
+  - /agent/prerequisite-resources
+  paused: false
+  repo: git@github.com:shpwrck/gloo-mesh-example.git
+  targets:
+  - clusterGroup: gloo-mesh-agent

@@ -1,0 +1,8 @@
+global:
+  provider: "eks"
+  client: "client"
+shared: {}
+manager:
+  count: 1
+agent:
+  count: 2

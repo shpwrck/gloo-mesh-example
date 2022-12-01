@@ -1,0 +1,31 @@
+apiVersion: networking.gloo.solo.io/v2
+kind: VirtualGateway
+metadata:
+  name: gloo-mesh-ui
+  namespace: gloo-mesh
+spec:
+  listeners:
+  - allowedRouteTables:
+    - host: "*.{{ .Values.client }}" 
+      selector:
+        workspace: mgmt
+    http: {}
+    port:
+      number: 80
+    httpsRedirect: true
+  - allowedRouteTables:
+    - host: "*.{{ .Values.client }}"
+      selector:
+        workspace: mgmt
+    http: {}
+    port:
+      number: 443
+    tls:
+      mode: SIMPLE
+      secretName: istio-ingress-certs  
+  workloads:
+  - selector:
+      cluster: mgmt
+      labels:
+        istio: ingressgateway
+      namespace: istio-ingress

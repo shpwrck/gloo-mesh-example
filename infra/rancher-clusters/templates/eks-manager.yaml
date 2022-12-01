@@ -1,0 +1,90 @@
+{{- if eq .Values.global.provider "eks" -}}
+---
+apiVersion: management.cattle.io/v3
+kind: Cluster
+metadata:
+  annotations:
+    janitor/ttl: 2d
+    authz.management.cattle.io/creator-role-bindings: '{"created":["cluster-owner"],"required":["cluster-owner"]}'
+    field.cattle.io/creatorId: user-qk54c
+    lifecycle.cattle.io/create.cluster-agent-controller-cleanup: "true"
+    lifecycle.cattle.io/create.cluster-provisioner-controller: "true"
+    lifecycle.cattle.io/create.cluster-scoped-gc: "true"
+    lifecycle.cattle.io/create.mgmt-cluster-rbac-remove: "true"
+  labels:
+    gloo-mesh.cluster-type: manager
+    dns: "{{ .Values.global.client }}.skrzypek.us"
+    agents: "{{ .Values.agent.count }}"
+    cattle.io/creator: norman
+  finalizers:
+  - controller.cattle.io/cluster-agent-controller-cleanup
+  - controller.cattle.io/cluster-scoped-gc
+  - controller.cattle.io/cluster-provisioner-controller
+  - controller.cattle.io/mgmt-cluster-rbac-remove
+  - wrangler.cattle.io/mgmt-cluster-remove
+  name: "c-{{ trunc 3 $.Release.Name }}m1"
+spec:
+  agentImageOverride: ""
+  answers: {}
+  clusterSecrets: {}
+  description: ""
+  desiredAgentImage: ""
+  desiredAuthImage: ""
+  displayName: "{{ $.Values.global.client }}-mgmt"
+  dockerRootDir: /var/lib/docker
+  eksConfig:
+    amazonCredentialSecret: cattle-global-data:cc-svw5v
+    displayName: "{{ $.Values.global.client }}-mgmt"
+    imported: false
+    kmsKey: ""
+    kubernetesVersion: "1.23"
+    loggingTypes: []
+    nodeGroups:
+    - desiredSize: 2
+      diskSize: 20
+      ec2SshKey: skrzypek-wsl
+      gpu: false
+      imageId: ""
+      instanceType: t3.2xlarge
+      labels: {}
+      launchTemplate: null
+      maxSize: 2
+      minSize: 2
+      nodegroupName: "{{ $.Values.global.client }}-mgmt"
+      requestSpotInstances: false
+      resourceTags:
+        created-by: jason_skrzypek
+        purpose: pre-sales
+        team: fe-presale
+      spotInstanceTypes: []
+      subnets: []
+      tags:
+        created-by: jason_skrzypek
+        purpose: pre-sales
+        team: fe-presale
+      userData: ""
+      version: "1.23"
+    privateAccess: false
+    publicAccess: true
+    publicAccessSources: []
+    region: us-east-1
+    secretsEncryption: false
+    securityGroups: []
+    serviceRole: ""
+    subnets:
+    - subnet-07e2a20bb2f58f1fa
+    - subnet-0d1ad80e44a0cd021
+    - subnet-0dcd7714b9da07e72
+    tags:
+      created-by: jason_skrzypek
+      purpose: pre-sales
+      team: fe-presale
+  enableClusterAlerting: false
+  enableClusterMonitoring: false
+  enableNetworkPolicy: false
+  fleetWorkspaceName: fleet-default
+  internal: false
+  localClusterAuthEndpoint:
+    enabled: false
+  windowsPreferedCluster: false
+{{- end -}}

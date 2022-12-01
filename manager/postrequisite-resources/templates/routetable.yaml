@@ -1,0 +1,23 @@
+apiVersion: networking.gloo.solo.io/v2
+kind: RouteTable
+metadata:
+  name: gloo-mesh-ui
+  namespace: gloo-mesh
+spec:
+  hosts:
+  - "gloo-ui.{{ .Values.client }}"
+  http:
+  - forwardTo:
+      destinations:
+      - kind: VIRTUAL_DESTINATION
+        port:
+          number: 8090
+        ref:
+          cluster: mgmt
+          name: gloo-mesh-ui
+          namespace: gloo-mesh
+    name: gloo-mesh-ui
+  virtualGateways:
+  - name: gloo-mesh-ui
+    namespace: gloo-mesh
+  workloadSelectors: []

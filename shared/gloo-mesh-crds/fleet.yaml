@@ -1,0 +1,5 @@
+defaultNamespace: gloo-mesh
+helm:
+  chart: gloo-mesh-crds
+  repo:  https://storage.googleapis.com/gloo-mesh-enterprise/gloo-mesh-crds
+  version: 2.2.0-rc1

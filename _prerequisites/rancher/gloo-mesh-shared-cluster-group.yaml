@@ -1,0 +1,14 @@
+apiVersion: fleet.cattle.io/v1alpha1
+kind: ClusterGroup
+metadata:
+  name: gloo-mesh-shared
+  namespace: fleet-default
+spec:
+  selector:
+    matchExpressions:
+    - key: gloo-mesh.cluster-type
+      operator: In
+      values:
+      - agent
+      - manager
+    matchLabels: {}

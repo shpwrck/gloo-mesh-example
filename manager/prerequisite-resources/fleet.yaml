@@ -1,0 +1,3 @@
+defaultNamespace: gloo-mesh
+dependsOn:
+- name: es-shared-external-secrets-operator

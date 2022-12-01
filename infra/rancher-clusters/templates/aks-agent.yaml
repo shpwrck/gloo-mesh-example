@@ -1,0 +1,97 @@
+{{- if eq .Values.global.provider "aks" -}}
+{{ $count := (.Values.agent.count | int) }}
+{{- range $index := until $count }}
+---
+apiVersion: management.cattle.io/v3
+kind: Cluster
+metadata:
+  annotations:
+    janitor/ttl: 2d
+    authz.management.cattle.io/creator-role-bindings: '{"created":["cluster-owner"],"required":["cluster-owner"]}'
+    field.cattle.io/creatorId: user-qk54c
+    lifecycle.cattle.io/create.cluster-agent-controller-cleanup: "true"
+    lifecycle.cattle.io/create.cluster-provisioner-controller: "true"
+    lifecycle.cattle.io/create.cluster-scoped-gc: "true"
+    lifecycle.cattle.io/create.mgmt-cluster-rbac-remove: "true"
+  finalizers:
+  - wrangler.cattle.io/mgmt-cluster-remove
+  - controller.cattle.io/cluster-agent-controller-cleanup
+  - controller.cattle.io/cluster-scoped-gc
+  - controller.cattle.io/cluster-provisioner-controller
+  - controller.cattle.io/mgmt-cluster-rbac-remove
+  labels:
+    gloo-mesh.cluster-type: agent
+    dns: "{{ $.Values.global.client }}.skrzypek.us"
+    customname: "worker{{ ($index | add1) }}"    
+    cattle.io/creator: norman
+    provider.cattle.io: aks
+  name: "c-{{ trunc 3 $.Release.Name }}w{{ ($index | add1) }}"
+spec:
+  agentImageOverride: ""
+  aksConfig:
+    authBaseUrl: null
+    authorizedIpRanges: null
+    azureCredentialSecret: cattle-global-data:cc-b2pdx
+    baseUrl: null
+    clusterName: "{{ $.Values.global.client }}-worker-{{ ($index | add1) }}"
+    dnsPrefix: "{{ $.Values.global.client }}-worker-{{ ($index | add1) }}"
+    dnsServiceIp: 10.0.0.10
+    dockerBridgeCidr: 172.17.0.1/16
+    httpApplicationRouting: null
+    imported: false
+    kubernetesVersion: 1.24.6
+    linuxAdminUsername: azureuser
+    loadBalancerSku: Standard
+    logAnalyticsWorkspaceGroup: null
+    logAnalyticsWorkspaceName: null
+    monitoring: null
+    networkPlugin: kubenet
+    networkPolicy: null
+    nodePools:
+    - availabilityZones:
+      - "1"
+      - "2"
+      - "3"
+      count: 3
+      enableAutoScaling: true
+      maxCount: 5
+      maxPods: 110
+      minCount: 1
+      mode: System
+      name: "{{ trunc 9 $.Values.global.client }}w{{ ($index | add1) }}"
+      orchestratorVersion: 1.24.6
+      osDiskSizeGB: 128
+      osDiskType: Managed
+      osType: Linux
+      vmSize: Standard_DS2_v2
+    podCidr: null
+    privateCluster: false
+    resourceGroup: skrzypek
+    resourceLocation: eastus
+    serviceCidr: 10.0.0.0/16
+    sshPublicKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC5KJB8fg7d/we7QBTBg4WAmZ2EB28rRuvixDtjOkX8UryZ/0fhIWNXS70qyzKashTbGV521K+pTv1x1+LbVgI8nR9Y6L/srXsKKyz/TW4K8vePrf5wF5dIOqxlU8DNyx5p6O0Uf/cIG1gTMlwdWh/WbH4a9p9y41bT8sFk0Nr9nmiR7Q/BqzvKz4M9wLviBHiJfOjqFWxp+iMBW5BK+lMaso3+uTP9aadTsMkNQRlRt86dsbF/LpNSgYKPNo3v8zG5TyedmffN4TRmfqYil7VEkswl3ibsBoVBFZ8UoYRF1QXtvzRLknJ/WMlztKQgLCSbes2rb18LrCKFxju2zRhzeTLM97rDGzJKR1E04LaHRvoevXNV7RdlABQ6Xn98Q6IQa+1EDqGAe2JOzzsWdn7UpF3FmoQ7otpsPOidjF6zwiFzLQ7nYxtC0Pgo2OKuuUCRCe96AaCpSDJvn5DP0M9IwB7rjQjAM2SGp6+KPfSjyzuSuz98aqhUHMTogyQ5WFM=
+      shpwrck@WorkNuc
+    subnet: null
+    tags:
+      created-by: jason_skrzypek
+      purpose: pre-sales
+      team: fe-presale
+    virtualNetwork: null
+    virtualNetworkResourceGroup: null
+  answers: {}
+  clusterSecrets: {}
+  description: ""
+  desiredAgentImage: ""
+  desiredAuthImage: ""
+  displayName: "{{ $.Values.global.client }}-worker-{{ ($index | add1) }}"
+  dockerRootDir: /var/lib/docker
+  enableClusterAlerting: false
+  enableClusterMonitoring: false
+  enableNetworkPolicy: false
+  fleetWorkspaceName: fleet-default
+  internal: false
+  localClusterAuthEndpoint:
+    enabled: false
+  windowsPreferedCluster: false
+{{ end -}}  
+{{- end -}}

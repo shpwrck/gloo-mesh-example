@@ -1,0 +1,8 @@
+defaultNamespace: gloo-mesh
+helm:
+  values:
+    tokenSecretName: "${ .ClusterLabels.dns }-token"
+    caSecretName: "${ .ClusterLabels.dns }-ca"
+dependsOn:
+- name: es-shared-external-secrets-operator
+- name: gmc-shared-gloo-mesh-crds

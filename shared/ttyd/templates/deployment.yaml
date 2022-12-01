@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ttyd
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ttyd
+  template:
+    metadata:
+      labels:
+        app: ttyd
+    spec:
+      affinity: {}
+      containers:
+      - args:
+        - --credential
+        - username:password
+        - bash
+        command:
+        - /usr/bin/ttyd
+        image: tsl0922/ttyd
+        name: ttyd
+        ports:
+        - containerPort: 7681
+          name: ttysd
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ttyd
+  namespace: default
+spec:
+  ports:
+  - name: ttysd
+    port: 7681
+    protocol: TCP
+    targetPort: 7681
+  selector:
+    app: ttyd
+  type: ClusterIP

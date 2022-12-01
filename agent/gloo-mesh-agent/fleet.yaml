@@ -1,0 +1,18 @@
+defaultNamespace: gloo-mesh
+helm:
+  chart: gloo-mesh-agent
+  repo:  https://storage.googleapis.com/gloo-mesh-enterprise/gloo-mesh-agent
+  version: 2.2.0-rc1
+  values:
+    insecure: false
+    cluster: "${ .ClusterLabels.customname }"
+    relay:
+      tokenSecret:
+        namespace: "gloo-mesh"
+      serverAddress: "${ .ClusterLabels.dns }:9900"
+    glooMeshAgent:
+      enabled: true
+dependsOn:
+- name: gmc-shared-gloo-mesh-crds
+- name: es-shared-external-secrets-operator
+- name: pre-gma-agent-prerequisite-resources

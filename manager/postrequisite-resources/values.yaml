@@ -1,0 +1,8 @@
+client: client
+tokenSecretName: token
+caSecretName: ca
+agents:
+  count: 2
+revision: 1-15
+repo: gcr.io/istio-release
+istioImage: 1.15.3  

@@ -1,0 +1,100 @@
+{{- if eq .Values.global.provider "gke" -}}
+apiVersion: management.cattle.io/v3
+kind: Cluster
+metadata:
+  annotations:
+    janitor/ttl: 2d
+    authz.management.cattle.io/creator-role-bindings: '{"created":["cluster-owner"],"required":["cluster-owner"]}'
+    clusters.management.cattle.io/ke-last-refresh: "1670508348"
+    field.cattle.io/creatorId: user-qk54c
+    lifecycle.cattle.io/create.cluster-agent-controller-cleanup: "true"
+    lifecycle.cattle.io/create.cluster-provisioner-controller: "true"
+    lifecycle.cattle.io/create.cluster-scoped-gc: "true"
+    lifecycle.cattle.io/create.mgmt-cluster-rbac-remove: "true"
+  finalizers:
+  - wrangler.cattle.io/mgmt-cluster-remove
+  - controller.cattle.io/cluster-agent-controller-cleanup
+  - controller.cattle.io/cluster-scoped-gc
+  - controller.cattle.io/cluster-provisioner-controller
+  - controller.cattle.io/mgmt-cluster-rbac-remove
+  labels:
+    gloo-mesh.cluster-type: manager
+    dns: "{{ .Values.global.client }}.skrzypek.us"
+    agents: "{{ .Values.agent.count }}"
+    cattle.io/creator: norman
+  name: "c-{{ trunc 3 $.Release.Name }}m1"
+spec:
+  agentImageOverride: ""
+  answers: {}
+  clusterSecrets: {}
+  description: ""
+  desiredAgentImage: ""
+  desiredAuthImage: ""
+  displayName: "{{ $.Values.global.client }}-mgmt"
+  dockerRootDir: /var/lib/docker
+  enableClusterAlerting: false
+  enableClusterMonitoring: false
+  enableNetworkPolicy: false
+  fleetWorkspaceName: fleet-default
+  gkeConfig:
+    clusterAddons:
+      horizontalPodAutoscaling: true
+      httpLoadBalancing: true
+    clusterIpv4Cidr: ""
+    clusterName: "{{ $.Values.global.client }}-mgmt"
+    description: ""
+    enableKubernetesAlpha: false
+    googleCredentialSecret: cattle-global-data:cc-xtktc
+    imported: false
+    ipAllocationPolicy:
+      useIpAliases: true
+    kubernetesVersion: 1.23.12-gke.100
+    labels:
+      created-by: jason_skrzypek
+      purpose: pre-sales
+      team: fe-presale
+    locations: []
+    loggingService: logging.googleapis.com/kubernetes
+    maintenanceWindow: ""
+    masterAuthorizedNetworks: {}
+    monitoringService: monitoring.googleapis.com/kubernetes
+    network: default
+    networkPolicyEnabled: false
+    nodePools:
+    - autoscaling:
+        enabled: true
+        maxNodeCount: 3
+        minNodeCount: 1
+      config:
+        diskSizeGb: 100
+        diskType: pd-standard
+        imageType: COS_CONTAINERD
+        labels:
+          created-by: jason_skrzypek
+          purpose: pre-sales
+          team: fe-presale
+        machineType: n1-standard-2
+        oauthScopes:
+        - https://www.googleapis.com/auth/devstorage.read_only
+        - https://www.googleapis.com/auth/logging.write
+        - https://www.googleapis.com/auth/monitoring
+        - https://www.googleapis.com/auth/servicecontrol
+        - https://www.googleapis.com/auth/service.management.readonly
+        - https://www.googleapis.com/auth/trace.append
+      initialNodeCount: 3
+      management:
+        autoRepair: true
+        autoUpgrade: true
+      maxPodsConstraint: 110
+      name: skrzypek-test
+      version: 1.23.12-gke.100
+    privateClusterConfig: {}
+    projectID: solo-test-236622
+    region: ""
+    subnetwork: default
+    zone: us-east1-b
+  internal: false
+  localClusterAuthEndpoint:
+    enabled: false
+  windowsPreferedCluster: false
+{{- end -}}

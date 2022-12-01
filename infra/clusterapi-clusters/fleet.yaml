@@ -1,0 +1,3 @@
+defaultNamespace: gloo-mesh
+helm:
+  values: {}

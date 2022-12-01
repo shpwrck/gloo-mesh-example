@@ -1,0 +1,7 @@
+defaultNamespace: gloo-mesh
+helm:
+  chart: external-secrets
+  repo:  https://charts.external-secrets.io
+  version: 0.7.0
+  values:
+    installCRDS: true

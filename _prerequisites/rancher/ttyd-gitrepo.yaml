@@ -1,0 +1,16 @@
+apiVersion: fleet.cattle.io/v1alpha1
+kind: GitRepo
+metadata:
+  name: ttyd
+  namespace: fleet-default
+spec:
+  branch: master
+  clientSecretName: auth-q7npb
+  forceSyncGeneration: 9
+  insecureSkipTLSVerify: false
+  paths:
+  - /shared/ttyd
+  paused: false
+  repo: git@github.com:shpwrck/gloo-mesh-example.git
+  targets:
+  - clusterGroup: gloo-mesh-shared

@@ -1,0 +1,251 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "fleet-gloo-manager-{{ .Values.global.client }}"
+  namespace: default
+type: addons.cluster.x-k8s.io/resource-set
+stringData:
+  fleet.yaml: |-
+      ---
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: cattle-fleet-system
+      spec: {}          
+      ---
+      # Source: fleet-agent/templates/configmap.yaml
+      kind: ConfigMap
+      apiVersion: v1
+      metadata:
+        name: fleet-agent
+        namespace: cattle-fleet-system
+      data:
+        config: |
+          labels:
+            agents: "{{ .Values.agent.count }}"
+            dns: "{{ .Values.global.client }}.skrzypek.us"
+            gloo-mesh.cluster-type: "manager"
+          clientID: ""
+{{ $count := (.Values.agent.count | int) }}
+{{- range $index := until $count }}          
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "fleet-gloo-agent-{{ $.Values.global.client }}-{{ ($index | add1) }}"
+  namespace: default
+type: addons.cluster.x-k8s.io/resource-set
+stringData:
+  fleet.yaml: |-
+      ---
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: cattle-fleet-system
+      spec: {}          
+      ---
+      # Source: fleet-agent/templates/configmap.yaml
+      kind: ConfigMap
+      apiVersion: v1
+      metadata:
+        name: fleet-agent
+        namespace: cattle-fleet-system
+      data:
+        config: |
+          labels:
+            customname: "worker{{ ($index | add1) }}"
+            agents: "{{ $.Values.agent.count }}"
+            dns: "{{ $.Values.global.client }}.skrzypek.us"
+            gloo-mesh.cluster-type: "agent"
+          clientID: ""
+---
+apiVersion: addons.cluster.x-k8s.io/v1alpha3
+kind: ClusterResourceSet
+metadata:
+ name: "fleet-gloo-agent-{{ $.Values.global.client }}-{{ ($index | add1) }}"
+ namespace: default
+spec:
+ strategy: "ApplyOnce"
+ clusterSelector:
+   matchLabels:
+     gloo-mesh.cluster-type: agent
+     gloo-mesh.agent-number: "{{ ($index | add1) }}"
+ resources:
+   - name: "fleet-gloo-shared-{{ $.Values.global.client }}"
+     kind: Secret
+   - name: "fleet-gloo-agent-{{ $.Values.global.client }}-{{ ($index | add1) }}"
+     kind: Secret
+{{ end -}}          
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "fleet-gloo-shared-{{ $.Values.global.client }}"
+  namespace: default
+type: addons.cluster.x-k8s.io/resource-set
+stringData:
+  fleet.yaml: |-
+      ---
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: cattle-fleet-system
+      spec:
+        finalizers:
+        - kubernetes
+      ---
+      # Source: fleet-agent/templates/network_policy_allow_all.yaml
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: default-allow-all
+        namespace: cattle-fleet-system
+      spec:
+        podSelector: {}
+        ingress:
+        - {}
+        egress:
+        - {}
+        policyTypes:
+        - Ingress
+        - Egress
+      ---
+      # Source: fleet-agent/templates/serviceaccount.yaml
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: fleet-agent
+        namespace: cattle-fleet-system
+      ---
+      # Source: fleet-agent/templates/secret.yaml
+      apiVersion: v1
+      data:
+        systemRegistrationNamespace: "Y2F0dGxlLWZsZWV0LWNsdXN0ZXJzLXN5c3RlbQ=="
+        clusterNamespace: "ZmxlZXQtZGVmYXVsdA=="
+        token: "ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklrdzFkMDlJY0RRdFpWQXpOMWx6UkhGRk5qaHVaRTlNYWtveWMxWlBTM1oyZVU1VlJsaHJUbE5RVm1zaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUptYkdWbGRDMWtaV1poZFd4MElpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WldOeVpYUXVibUZ0WlNJNkltZHNiMjh0YldGdVlXZGxjaTAyTVRoaE9HRTNaUzA1Tm1Ga0xUUmhNVFl0T0dFME15MW1NelUzTnpNMk5UZGtNMlV0ZEc5clpXNHRPVFI0WkRRaUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaVoyeHZieTF0WVc1aFoyVnlMVFl4T0dFNFlUZGxMVGsyWVdRdE5HRXhOaTA0WVRRekxXWXpOVGMzTXpZMU4yUXpaU0lzSW10MVltVnlibVYwWlhNdWFXOHZjMlZ5ZG1salpXRmpZMjkxYm5RdmMyVnlkbWxqWlMxaFkyTnZkVzUwTG5WcFpDSTZJalExTm1Jek5EUTFMVGN3TmpjdE5EUTFPQzFpT0RZNExXSXhOR1ZrTVdSa01tWXdNQ0lzSW5OMVlpSTZJbk41YzNSbGJUcHpaWEoyYVdObFlXTmpiM1Z1ZERwbWJHVmxkQzFrWldaaGRXeDBPbWRzYjI4dGJXRnVZV2RsY2kwMk1UaGhPR0UzWlMwNU5tRmtMVFJoTVRZdE9HRTBNeTFtTXpVM056TTJOVGRrTTJVaWZRLlFjdU53ZUFQbzNNcjF4b3REZHpudFUtcmM5aHUyLUZERnAwTW1XODNpUXFyM0pVR210ZTdCRnNxTVJSbTJKT0xvM0hCbTNva3o3bmhucnJERWFIekR4LU5KWE9vRzE2YWFiU3JoV2t4cDBNM213S1IyR2VhMmVQMXd1WE5vVjVKazVLcWo4ckN1OU9UTGFXYjgyRUJJLWZBUk15alRMU1h6X1R1UWZoTGI5TjlOdFBUV2FIcG5oZk9kbmxwOVlRZG9uODg5ZHlKTmZFN1hhRnlMdjhyenY4UFd1TEc5cEtvc3Y3N1BNdU9LeXU3R2hsR0l5UllQX2FiRFNRNlk5RDVsMll6d1FfbXZVNzBzQUdUUC03ZjlOYkZ1d21xTlVMaVNSSkRGSXZpQzYtV3Q1dGk5UEhfU2tIT0hidFNBV0RZRzFpNHpCNWZsd04yNXlSS2xrZy1wUQ=="
+        apiServerURL: "aHR0cHM6Ly9rOHMuc2tyenlwZWsuZGV2"
+        apiServerCA: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURKekNDQWcrZ0F3SUJBZ0lDQm5Vd0RRWUpLb1pJaHZjTkFRRUxCUUF3TXpFVk1CTUdBMVVFQ2hNTVJHbG4KYVhSaGJFOWpaV0Z1TVJvd0dBWURWUVFERXhGck9ITmhZWE1nUTJ4MWMzUmxjaUJEUVRBZUZ3MHlNakV4TXpBeApPVE00TVRKYUZ3MDBNakV4TXpBeE9UTTRNVEphTURNeEZUQVRCZ05WQkFvVERFUnBaMmwwWVd4UFkyVmhiakVhCk1CZ0dBMVVFQXhNUmF6aHpZV0Z6SUVOc2RYTjBaWElnUTBFd2dnRWlNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0SUIKRHdBd2dnRUtBb0lCQVFERFVJSG5PUU5hcU1lc0crc01QRE41cDI5N2EwRDhNODB5ZFpocWlZa2RXZXdDV0dRMgpEeFVpMWMxVDNNOUg5WGxWZ2xYdXQwdFFTYVdjYUgrYUlFUGZsRzZyMXdtakVOOU5zNFYybmZHVml1anNjQzRjCjZRNzNUOSttYUV0YWhBNDNmZGwzeEJFSGtWT21EeGZDSG5XdktoUXpBTXA2STd6dUJkZlpzalBxZHFoTmJuTDUKRWRCZGdxdGZpY28yVjJuaUFMNnA1aXRVUnkzeExoY2xjNUtINitjL1F3L3Z0STB3Z2ZmdVNldW1MSGh5U3RVVQp0d3dENWRYRHRWVkx2aUdZWjJlblcwd05zd1gvc3BKTFc4ZkFJVTNmRTVQR1hDWnRkMVlRVFVqUmtMYWVvVExGCkU3Z09pZWZqWjBoT1kyRk5YVHlOM3p0ckJ5M3BGUkp0bmVVekFnTUJBQUdqUlRCRE1BNEdBMVVkRHdFQi93UUUKQXdJQmhqQVNCZ05WSFJNQkFmOEVDREFHQVFIL0FnRUFNQjBHQTFVZERnUVdCQlJWa0pXODBBWUxMQnZmcC9GawpqQzJlRkRLc3JqQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFLci9ibC83elRpTU5ZNjcvYldaNmxkZGdRQlJ0CmZIb2xtV0VReUNseHhOLzhubnVuRklpdGVLem9WQlVxTDBIK0xEQkdZZ3RBMHcxdTBudE56S29lbmVwcnFhV3UKL21xalNINUltQ2dING5mdzl4TnkwdXA0YmtXS3NhTnhOaHNuSnVFRzIzQUVJQWY4cjFPUDBWSWRSajN6K1N5aAo2ZXQwQXdnNFZFTlR5Vm04WWpuSUk1cnZnSjVtcHRsZzFuQkZOK1ZqQWpkWm1MUTQ5endkSkVrL2lYK1pRc2xrCmFwMmhSTXRQUmp2QWh5OWh3QTM3ekNQbWVweU9ZaVdTTzhPZEFDdXhzd3V2bjJMSlpUb3BKREJxTDFZcUpDa20KWjdONXBWSGIraEFFRFNtcmE4RCswdHpiZ0xwTHRvaWplNHZLQXJvRHlTOVp1S1lFbEUzTGZxaFY5QT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
+      kind: Secret
+      metadata:
+        name: fleet-agent-bootstrap
+        namespace: cattle-fleet-system
+      ---
+      # Source: fleet-agent/templates/rbac.yaml
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRole
+      metadata:
+        name: fleet-agent-system-fleet-agent-role
+        namespace: cattle-fleet-system
+      rules:
+      - apiGroups:
+        - '*'
+        resources:
+        - '*'
+        verbs:
+        - '*'
+      ---
+      # Source: fleet-agent/templates/rbac.yaml
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: fleet-agent-system-fleet-agent-role-binding
+        namespace: cattle-fleet-system
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: fleet-agent-system-fleet-agent-role
+      subjects:
+      - kind: ServiceAccount
+        name: fleet-agent
+        namespace: cattle-fleet-system
+      ---
+      # Source: fleet-agent/templates/deployment.yaml
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: fleet-agent
+        namespace: cattle-fleet-system
+      spec:
+        selector:
+          matchLabels:
+            app: fleet-agent
+        template:
+          metadata:
+            labels:
+              app: fleet-agent
+          spec:
+            containers:
+            - env:
+              - name: NAMESPACE
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
+              image: 'rancher/fleet-agent:v0.6.0-rc.1'
+              name: fleet-agent
+              command:
+              - fleetagent
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+            serviceAccountName: fleet-agent
+            nodeSelector:
+              kubernetes.io/os: linux
+            tolerations:
+              - key: "cattle.io/os"
+                value: "linux"
+                effect: "NoSchedule"
+                operator: "Equal"
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              runAsGroup: 1000
+      ---
+      # Source: fleet-agent/templates/patch_default_serviceaccount.yaml
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: patch-fleet-sa
+        namespace: cattle-fleet-system
+        annotations:
+          "helm.sh/hook": post-install, post-upgrade
+          "helm.sh/hook-delete-policy": hook-succeeded, before-hook-creation
+      spec:
+        template:
+          spec:
+            serviceAccountName: fleet-agent
+            restartPolicy: Never
+            containers:
+            - name: sa
+              image: "rancher/kubectl:v1.21.5"
+              imagePullPolicy:
+              command: ["kubectl", "patch", "serviceaccount", "default", "-p", "{\"automountServiceAccountToken\": false}"]
+              args: ["-n", default]
+            nodeSelector:
+              kubernetes.io/os: linux
+            tolerations:
+              - key: "cattle.io/os"
+                value: "linux"
+                effect: "NoSchedule"
+                operator: "Equal"
+              - effect: NoSchedule
+                key: node.cloudprovider.kubernetes.io/uninitialized
+                operator: Equal
+                value: "true"
+        backoffLimit: 1
+---
+apiVersion: addons.cluster.x-k8s.io/v1alpha3
+kind: ClusterResourceSet
+metadata:
+ name: "fleet-gloo-manager-{{ $.Values.global.client }}"
+ namespace: default
+spec:
+ strategy: "ApplyOnce"
+ clusterSelector:
+   matchLabels:
+     gloo-mesh.cluster-type: manager
+ resources:
+   - name: "fleet-gloo-shared-{{ $.Values.global.client }}"
+     kind: Secret
+   - name: "fleet-gloo-manager-{{ $.Values.global.client }}"
+     kind: Secret

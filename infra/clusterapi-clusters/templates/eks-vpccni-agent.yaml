@@ -1,0 +1,99 @@
+{{- if eq .Values.global.provider "eks" -}}
+{{ $count := (.Values.agent.count | int) }}
+{{- range $index := until $count }}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+  namespace: default
+  labels:
+    gloo-mesh.cluster-type: agent
+    gloo-mesh.agent-number: "{{ ($index | add1) }}"
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta2
+    kind: AWSManagedControlPlane
+    name: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    kind: AWSManagedCluster
+    name: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: AWSManagedCluster
+metadata:
+  name: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+  namespace: default
+spec: {}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
+kind: AWSManagedControlPlane
+metadata:
+  name: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+  namespace: default
+spec:
+  additionalTags:
+    created-by: "jason_skrzypek"
+    team: "fe-presale"
+    purpose: "pre-sales" 
+  associateOIDCProvider: true
+  addons:
+  - conflictResolution: overwrite
+    name: vpc-cni
+    version: v1.12.0-eksbuild.1
+  network:
+    vpc:
+      id: vpc-0e0297aafe37315c6
+    subnets:
+    - id: subnet-0710b00dc182ff84d
+    - id: subnet-0c1e507be61253cad
+    - id: subnet-002161756f4cb53ae
+    - id: subnet-0e30c99e1b2a7afe4
+    - id: subnet-09bf7fba2ba8e580b
+    - id: subnet-0f43a13de9169128a
+  oidcIdentityProviderConfig:
+    identityProviderConfigName: dex-skrzypek
+    clientId: client-id
+    groupsClaim: groups
+    usernameClaim: email
+    issuerUrl: https://dex.k8s.skrzypek.dev
+  region: us-east-1
+  sshKeyName: skrzypek-wsl
+  version: 1.24.7
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachinePool
+metadata:
+  name: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+  namespace: default
+spec:
+  clusterName: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+  replicas: 3
+  template:
+    spec:
+      bootstrap:
+        dataSecretName: ""
+      clusterName: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+        kind: AWSManagedMachinePool
+        name: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: AWSManagedMachinePool
+metadata:
+  name: "{{ $.Values.global.client }}-agent-{{ ($index | add1) }}"
+  namespace: default
+spec:
+  roleName: JSKRZYPEK-IRSA
+  additionalTags:
+    created-by: "jason_skrzypek"
+    team: "fe-presale"
+    purpose: "pre-sales" 
+{{ end -}}
+{{- end -}}

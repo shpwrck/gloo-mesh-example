@@ -1,0 +1,11 @@
+{{ $count := (.Values.agent.count | int) }}
+{{- range $index := until $count }}
+---
+apiVersion: admin.gloo.solo.io/v2
+kind: KubernetesCluster
+metadata:
+  name: "worker{{ ($index | add1) }}"
+  namespace: gloo-mesh
+spec:
+  clusterDomain: cluster.local
+{{ end -}}

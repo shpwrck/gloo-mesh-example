@@ -1,0 +1,33 @@
+defaultNamespace: gloo-mesh
+helm:
+  chart: gloo-mesh-enterprise
+  repo:  https://storage.googleapis.com/gloo-mesh-enterprise/gloo-mesh-enterprise
+  version: 2.2.0-rc1
+  values:
+    adminNamespace: "gloo-mesh"
+    insecure: false
+    licenseSecretName: "license-keys"
+    glooMeshMgmtServer: 
+      relay:
+        tokenSecret:
+          namespace: "gloo-mesh"
+      serviceOverrides:
+        metadata:
+          annotations:
+            external-dns.alpha.kubernetes.io/hostname: global.fleet.clusterLabels.dns 
+      serviceType: LoadBalancer
+      resources:
+        requests:
+          cpu: 1
+          memory: 1Gi
+    global:
+      cluster: mgmt
+    mgmtClusterName: mgmt
+    registerMgmtPlane:
+      enabled: true
+      ext-auth-service:
+        enabled: true
+dependsOn:
+- name: gmc-shared-gloo-mesh-crds
+- name: es-shared-external-secrets-operator
+- name: pre-gme-manager-prerequisite-resources

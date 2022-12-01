@@ -1,0 +1,15 @@
+apiVersion: bootstrap.aws.infrastructure.cluster.x-k8s.io/v1beta1
+kind: AWSIAMConfiguration
+spec:
+  stackName: jskrzypek-clusterapi
+  namePrefix: jskrzypek-
+  region: us-east-1
+  bootstrapUser:
+    enable: true
+  eks:
+    enable: true
+    iamRoleCreation: false
+    managedMachinePool:
+      disable: false
+    fargate:
+      disable: false

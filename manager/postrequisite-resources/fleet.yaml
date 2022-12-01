@@ -1,0 +1,17 @@
+defaultNamespace: gloo-mesh
+helm: 
+  values:
+    client: "${ .ClusterLabels.dns }"
+    tokenSecretName: "${ .ClusterLabels.dns }-token"
+    caSecretName: "${ .ClusterLabels.dns }-ca"
+    agent:
+      count: "${ .ClusterLabels.agents }" 
+diff:
+  comparePatches:
+  - apiVersion: admissionregistration.k8s.io/v1
+    kind: ValidatingWebhookConfiguration
+    name: cert-manager-webhook
+    operations:
+    - {"op": "remove", "path":"/webhooks"}
+dependsOn:
+- name: gme-manager-gloo-mesh-enterprise
