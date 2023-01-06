@@ -1,7 +1,7 @@
 # GLOO PLATFORM PROVISIONING
 
 ## Background
-Rebuilding client environments is cumbersome without automation. I used what I had already to automate the install process of a multi-cluster setup into a single helm chart. The automation currently uses Rancher heavily, but could/should be swapped with clusterapi or crossplane. I would **not** recommend this for production as is.
+This project was designed to reduce the number of manual steps for installing Gloo Platform.
 
 ## Required Components
 * Management Server with:
@@ -62,13 +62,9 @@ helm install {{releasename}} ./infra/rancher-clusters \
 
 ## TODO
 
-* swap builtin ca with letsencrypt
 * create gitops dependency between clusters
-* sealed-secrets on infra cluster
 * generate license
 * input portal
 * output portal
 * select gloo mesh version
-* swap out rancher with clusterapi or crossplane
 * swap out digitalocean dns with dns matching provider
-* switch external secrets provider
